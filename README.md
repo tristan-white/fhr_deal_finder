@@ -7,7 +7,8 @@ For an explanation of the motivation behind this project, see [this post](https:
 Aggregates FHR search results from the Amex Travel website.
 
 # Usage
-Run `python3 fhr_cli.py` to see command line options:
+Ensure `fhrlib.py` is in the same directory as `fhr_cli.py`.
+Run `python3 fhr_cli.py -h` to see command line options.
 
 ```
 $ python3 fhr_cli.py -h
