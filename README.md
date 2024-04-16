@@ -1,6 +1,8 @@
 # Fine Hotels + Resorts Deal Finder
 
-This project enables you to easily find the best (priced) place to spend the Amex Platinum Card $200 hotel credit.
+This project enables you to easily find the best (priced) place to spend the Amex Platinum Card $200 hotel credit by creating an interactive graph of prices and dates.
+
+See an example graph here: [https://tristanwhite.me/fhr.html](https://tristanwhite.me/fhr.html)
 
 For an explanation of the motivation behind this project, see [this post](https://tristanwhtie.me/optimizing-amex-hotel-credit.html)
 
