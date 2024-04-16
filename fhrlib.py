@@ -6,7 +6,9 @@ import os
 import pandas as pd
 import plotly.express as px
 import plotly.graph_objects as go
+import cloudscraper
 
+SLEEPTIME = 10
 US_STATES = [
     "Alabama", "Alaska", "Arizona", "Arkansas", "California", "Colorado",
     "Connecticut", "Delaware", "Florida", "Georgia", "Hawaii", "Idaho",
@@ -17,6 +19,9 @@ US_STATES = [
     "Oregon", "Pennsylvania", "Rhode Island", "South Carolina", "South Dakota",
     "Tennessee", "Texas", "Utah", "Vermont", "Virginia", "Washington",
     "West Virginia", "Wisconsin", "Wyoming"
+]
+REGIONS = [
+    "United States", "South America", "Europe", "Asia Pacific", "Middle East", "Middle East and Africa"
 ]
 URL = 'https://www.amextravel.com/api/hotel_searches'
 HEADERS = {
@@ -60,18 +65,23 @@ DATA = {
     },
     "partner_programs": ""
 }
-SLEEPTIME = 15
 
-def formatReqData(start_date: str, state: str, city: str = None) -> dict:
+def formatReqData(start_date: str, region: str=None, state: str=None, city: str = None) -> dict:
     req_data = DATA.copy()
     if city:
         assert city[0].isupper() and city[1:].islower()
         assert state in US_STATES
         location_name = f"{city}, {state}, United States"
         req_data["hotel_search"]["location_type"] = "CITY"
-    else:
+    elif state:
+        assert state in US_STATES
         location_name = f"{state}, United States"
         req_data["hotel_search"]["location_type"] = "STATE"
+    else:
+        assert region in REGIONS
+        location_name = region
+        req_data["hotel_search"]["location_type"] = "REGION"
+
 
     req_data["hotel_search"]["start_date"] = start_date.isoformat()
     req_data["hotel_search"]["location_name"] = location_name
@@ -83,8 +93,12 @@ def formatReqData(start_date: str, state: str, city: str = None) -> dict:
 Get json data about hotels in a state.
 This function makes a request to amextravel.com, receives json, then 
 """
-def getStateJsonForDate(url: str, req_json: str) -> dict:
-    response = requests.post(url, headers=HEADERS, json=req_json, allow_redirects=True)
+def getStateJsonForDate(url: str, req_json: dict) -> dict:
+    holdUp() # prevent throttling:
+
+    scraper = cloudscraper.create_scraper()
+
+    response = scraper.post(url, headers=HEADERS, json=req_json, allow_redirects=True)
     if response.status_code == 512:
         # no hotels for this night
         return {}
@@ -98,10 +112,22 @@ def getStateJsonForDate(url: str, req_json: str) -> dict:
         print("Reponse text:\n\n")
         print(response.text)
         exit(1)
-    # write response data to file according to naming convention: STATE_DATE
-    # where STATE is an entry from the list of states and DATE is the start date
     return state_data
 
+def getRegionJsonForDate(URL: str, req_data: dict):
+    holdUp() # prevent throttling
+    r1 = requests.post(URL, headers=HEADERS, json=req_data, allow_redirects=True)
+    holdUp() # prevent throttling
+
+    if r1.status_code != 200:
+        print(f"Unexpected response code: {r1.status_code}")
+    r1_json = json.loads(r1.text)
+    id = r1_json['id']
+
+    r2 = requests.get(url=f"{URL}/{id}?promotion_token=&extlink=&size=1000", headers=HEADERS, cookies=r1.cookies, allow_redirects=True)
+    region_data = json.loads(r2.text)
+    return region_data
+    
 def jsonToDataFrame(json_input: dict) -> pd.DataFrame:
     ret = []
     weekdays = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"]
@@ -118,6 +144,8 @@ def jsonToDataFrame(json_input: dict) -> pd.DataFrame:
                 "taxes_and_fees": "",
                 "city": h["address"]["city_name"],
                 "state": h["address"]["state_province_code"],
+                "latitude": h["geocoding"]["latitude"],
+                "longitude": h["geocoding"]["longitude"],
             }
         )
         if h["availability_status"] == "AVAILABLE":
@@ -125,44 +153,43 @@ def jsonToDataFrame(json_input: dict) -> pd.DataFrame:
             ret[-1]["taxes_and_fees"] = h["room_with_all_rates"]["display_rate"]["total_taxes_and_fees"]["cents"] // 100
     return pd.DataFrame(ret)
 
+def holdUp():
+    return
+    # prevent throttling
+    print("Waiting momentarily to prevent throttling...", end="", flush=True)
+    for i in range(SLEEPTIME):
+        print(".", end="", flush=True)
+        time.sleep(1)
+    print()
+
 # returns a dataframe with price info for the location across the dates
-def getDfForDatesInLoc(state: str, start_date: datetime.date, end_date: datetime.date, city: str = None, fname: str = None) -> pd.DataFrame:
+def getDfForDatesInLoc(state: str, start_date: datetime.date, end_date: datetime.date, city: str=None, fname: str=None, region: str=None) -> pd.DataFrame:
     assert start_date >= datetime.date.today()
     assert end_date > start_date
 
-    print(f"Beginning search in {state} for the dates from {start_date} to {end_date}.")
-    print(f"Estimated search time: {SLEEPTIME * (end_date - start_date).days / 60} minutes.\n")
+    eta = SLEEPTIME * (end_date - start_date).days / 60
+    if region:
+        eta *= 2
+    print(f"Estimated search time: {eta} minutes.\n")
 
     df = pd.DataFrame()
-
-    # iterate over the dates
     while (start_date != end_date):
-        print(f"Getting data for {start_date}...", end="", flush=True)
+        print(f"Getting data for {start_date}")
         # format request data
-        req_data = formatReqData(start_date, state, city)
-
+        req_data = formatReqData(start_date, region, state, city)
         # make request
-        response_json = getStateJsonForDate(URL, req_data)
-        print("done.")
-
-        # prevent throttling
-        print("Waiting momentarily to prevent throttling...", end="", flush=True)
-        for i in range(SLEEPTIME):
-            print(".", end="", flush=True)
-            time.sleep(1)
-        print()
-
+        if not state:
+            response_json = getRegionJsonForDate(URL, req_data)
+        else:
+            response_json = getStateJsonForDate(URL, req_data)
         if not response_json:
             continue
-        
         # convert response json to dataframe
         cur_df = jsonToDataFrame(response_json)
         if cur_df.empty == True:
             continue
-
         # update df
         df = pd.concat([df, cur_df], ignore_index=False)
-
         # save dataframe to csv file
         if fname:
             df.to_csv(fname, index=False)
@@ -172,7 +199,8 @@ def getDfForDatesInLoc(state: str, start_date: datetime.date, end_date: datetime
     return df 
 
 def dfToFig(df: pd.DataFrame) -> go.Figure:
-    fig = px.line(df, x="date", y="lowest_rate", color="name", symbol="name", hover_data=["taxes_and_fees", "city", "weekday"])
+    fig = px.line(df, x="date", y="lowest_rate", color="name", symbol="name", 
+                  hover_data=["taxes_and_fees", "city", "state", "weekday"])
     cur = datetime.datetime.now().date().isoformat()
     start = df.iloc[0]['date']
     end = df.iloc[-1]['date']

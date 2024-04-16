@@ -12,7 +12,7 @@ Run `python3 fhr_cli.py -h` to see command line options.
 
 ```
 $ python3 fhr_cli.py -h
-usage: fhr_cli.py [-h] -b BEGIN -e END -s STATE [-c CITY] [-o OUTPUT]
+usage: fhr_cli.py [-h] -b BEGIN -e END [-r REGION] [-s STATE] [-c CITY] [-o OUTPUT]
 
 Aggregates FHR search results from the Amex Travel website.
 
@@ -21,14 +21,12 @@ options:
   -b BEGIN, --begin BEGIN
                         The start date for data queries. Format: YYYY-MM-DD
   -e END, --end END     The end date for data queries. Format: YYYY-MM-DD
+  -r REGION, --region REGION
+                        The region used in the query.
   -s STATE, --state STATE
                         The state used in the query.
-  -c CITY, --city CITY  The city used in the query. City name needs to be
-                        capitalized. This option isn't well tested - if not
-                        working, don't use this option and use only the state
-                        of the city; you should still be able to find the
-                        hotel in the data.
+  -c CITY, --city CITY  The city used in the query. City name needs to be capitalized. This option isn't well tested - if not working, don't use this option and use only the state of the city; you should still be able to find
+                        the hotel in the data.
   -o OUTPUT, --output OUTPUT
-                        If provided, all data used to generate the final graph
-                        is saved to a csv file with this name.
+                        If provided, all data used to generate the final graph is saved to a csv file with this name.
 ```
