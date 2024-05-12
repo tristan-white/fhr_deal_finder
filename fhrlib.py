@@ -2,11 +2,11 @@ import requests
 import time
 import json
 import datetime
-import os
+import cloudscraper
 import pandas as pd
 import plotly.express as px
 import plotly.graph_objects as go
-import cloudscraper
+import click
 
 SLEEPTIME = 10
 US_STATES = [
@@ -103,14 +103,14 @@ def getStateJsonForDate(url: str, req_json: dict) -> dict:
         # no hotels for this night
         return {}
     if response.status_code != 200:
-        print(f"Unexpected response code: {response.status_code}")
+        click.echo(f"Unexpected response code: {response.status_code}")
     try:
         state_data = json.loads(response.text)
     except:
-        print("Unable to convert reponse text to json.")
-        print(f"Response code: {response.status_code}")
-        print("Reponse text:\n\n")
-        print(response.text)
+        click.echo("Unable to convert reponse text to json.")
+        click.echo(f"Response code: {response.status_code}")
+        click.echo("Reponse text:\n\n")
+        click.echo(response.text)
         exit(1)
     return state_data
 
@@ -120,7 +120,7 @@ def getRegionJsonForDate(URL: str, req_data: dict):
     holdUp() # prevent throttling
 
     if r1.status_code != 200:
-        print(f"Unexpected response code: {r1.status_code}")
+        click.echo(f"Unexpected response code: {r1.status_code}")
     r1_json = json.loads(r1.text)
     id = r1_json['id']
 
@@ -154,27 +154,24 @@ def jsonToDataFrame(json_input: dict) -> pd.DataFrame:
     return pd.DataFrame(ret)
 
 def holdUp():
-    return
     # prevent throttling
-    print("Waiting momentarily to prevent throttling...", end="", flush=True)
-    for i in range(SLEEPTIME):
-        print(".", end="", flush=True)
+    click.echo("Waiting momentarily to prevent throttling...", end="", flush=True)
+    for _ in range(SLEEPTIME):
+        click.echo(".", end="", flush=True)
         time.sleep(1)
-    print()
+    click.echo()
 
 # returns a dataframe with price info for the location across the dates
 def getDfForDatesInLoc(state: str, start_date: datetime.date, end_date: datetime.date, city: str=None, fname: str=None, region: str=None) -> pd.DataFrame:
-    assert start_date >= datetime.date.today()
-    assert end_date > start_date
 
     eta = SLEEPTIME * (end_date - start_date).days / 60
     if region:
         eta *= 2
-    print(f"Estimated search time: {eta} minutes.\n")
+    click.echo(f"Estimated search time: {eta} minutes.\n")
 
     df = pd.DataFrame()
     while (start_date != end_date):
-        print(f"Getting data for {start_date}")
+        click.echo(f"Getting data for {start_date}")
         # format request data
         req_data = formatReqData(start_date, region, state, city)
         # make request
