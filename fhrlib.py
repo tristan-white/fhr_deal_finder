@@ -7,6 +7,7 @@ import pandas as pd
 import plotly.express as px
 import plotly.graph_objects as go
 import click
+import difflib
 
 SLEEPTIME = 10
 US_STATES = [
@@ -66,14 +67,39 @@ DATA = {
     "partner_programs": ""
 }
 
+def getCities(url: str) -> list[str]:
+    """
+    Get all possible cities.
+    """
+
+    scraper = cloudscraper.create_scraper()
+
+    response = scraper.get(url)
+    if response.status_code != 200:
+        # this isn't catastrophic for the tool, so don't raise anything
+        return []
+
+    raw = response.text
+    citiesjson = json.loads(raw[raw.find('['):].encode('utf-8'))
+
+    return [js['resultNameEn'].lower() for js in citiesjson if ',' in js['result']]
+
 def formatReqData(start_date: str, region: str=None, state: str=None, city: str = None) -> dict:
+
+    cities = getCities('https://www.americanexpress.com/en-us/travel/discover/resources/search.json')
+
     req_data = DATA.copy()
     if city:
-        assert city[0].isupper() and city[1:].islower()
+        if city.lower() not in cities:
+            closest = difflib.get_close_matches(city, cities)
+            click.echo(f'warning: {city.title()} not in known cities list. closest matches are {[close.title() for close in closest]}.')
+        city = city.title()
+        state = state.title()
         assert state in US_STATES
         location_name = f"{city}, {state}, United States"
         req_data["hotel_search"]["location_type"] = "CITY"
     elif state:
+        state = state.title()
         assert state in US_STATES
         location_name = f"{state}, United States"
         req_data["hotel_search"]["location_type"] = "STATE"
@@ -81,7 +107,6 @@ def formatReqData(start_date: str, region: str=None, state: str=None, city: str 
         assert region in REGIONS
         location_name = region
         req_data["hotel_search"]["location_type"] = "REGION"
-
 
     req_data["hotel_search"]["start_date"] = start_date.isoformat()
     req_data["hotel_search"]["location_name"] = location_name
@@ -155,9 +180,9 @@ def jsonToDataFrame(json_input: dict) -> pd.DataFrame:
 
 def holdUp():
     # prevent throttling
-    click.echo("Waiting momentarily to prevent throttling...", end="", flush=True)
+    click.echo("Waiting momentarily to prevent throttling...")
     for _ in range(SLEEPTIME):
-        click.echo(".", end="", flush=True)
+        click.echo(".", nl=False)
         time.sleep(1)
     click.echo()
 
@@ -180,6 +205,7 @@ def getDfForDatesInLoc(state: str, start_date: datetime.date, end_date: datetime
         else:
             response_json = getStateJsonForDate(URL, req_data)
         if not response_json:
+            start_date += datetime.timedelta(days=1)
             continue
         # convert response json to dataframe
         cur_df = jsonToDataFrame(response_json)

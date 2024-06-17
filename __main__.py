@@ -1,3 +1,5 @@
+#!/usr/bin/env python3
+
 import datetime
 import click
 
@@ -47,7 +49,7 @@ def checkBeginDate(ctx, param, value):
 )
 @click.option('-s', '--state',
     help="State used in query. Required if city is given.",
-    type=click.Choice(fhr.US_STATES, case_sensitive=True),
+    type=click.Choice(fhr.US_STATES, case_sensitive=False),
 )
 @click.option('-r', '--region',
     help="Region used in query.",
@@ -80,6 +82,10 @@ def cli(begin, end, output, city, state, region):
         fname=output, 
         region=region
     )
+
+    if len(df) == 0:
+        print('no hotels to show')
+        exit(1)
 
     fig = fhr.dfToFig(df)
     fig.show()

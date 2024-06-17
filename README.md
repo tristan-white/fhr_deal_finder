@@ -10,25 +10,30 @@ Aggregates FHR search results from the Amex Travel website.
 
 # Usage
 Ensure `fhrlib.py` is in the same directory as `fhr_cli.py`.
-Run `python3 fhr_cli.py -h` to see command line options.
+Run `python3 fhr_deal_finder --help` from above the root direcory of this project to see command line options.
 
 ```
-$ python3 fhr_cli.py -h
-usage: fhr_cli.py [-h] -b BEGIN -e END [-r REGION] [-s STATE] [-c CITY] [-o OUTPUT]
+$ python3 fhr_deal_finder --help
+Usage: __main__.py [OPTIONS]
 
-Aggregates FHR search results from the Amex Travel website.
+Options:
+  -b, --begin [%Y-%m-%d]          The start date for data queries. Format:
+                                  yyyy-mm-dd
+  -e, --end [%Y-%m-%d]            The end date for data queries. Format: yyyy-
+                                  mm-dd
+  -o, --output TEXT               Name of the output csv file used to save the
+                                  graph's source data  [default: output.csv]
+  -s, --state [Alabama|Alaska|Arizona|Arkansas|California|Colorado|Connecticut|Delaware|Florida|Georgia|Hawaii|Idaho|Illinois|Indiana|Iowa|Kansas|Kentucky|Louisiana|Maine|Maryland|Massachusetts|Michigan|Minnesota|Mississippi|Missouri|Montana|Nebraska|Nevada|New Hampshire|New Jersey|New Mexico|New York|North Carolina|North Dakota|Ohio|Oklahoma|Oregon|Pennsylvania|Rhode Island|South Carolina|South Dakota|Tennessee|Texas|Utah|Vermont|Virginia|Washington|West Virginia|Wisconsin|Wyoming]
+                                  State used in query. Required if city is
+                                  given.
+  -r, --region [United States|South America|Europe|Asia Pacific|Middle East|Middle East and Africa]
+                                  Region used in query.  [required]
+  -c, --city TEXT                 The city used in the query. City name needs
+                                  to be capitalized. This option isn't well
+                                  tested - if not working, don't use this
+                                  option and use only the state of the city;
+                                  you should still be able to find the hotel
+                                  in the data.
+  --help                          Show this message and exit.
 
-options:
-  -h, --help            show this help message and exit
-  -b BEGIN, --begin BEGIN
-                        The start date for data queries. Format: YYYY-MM-DD
-  -e END, --end END     The end date for data queries. Format: YYYY-MM-DD
-  -r REGION, --region REGION
-                        The region used in the query.
-  -s STATE, --state STATE
-                        The state used in the query.
-  -c CITY, --city CITY  The city used in the query. City name needs to be capitalized. This option isn't well tested - if not working, don't use this option and use only the state of the city; you should still be able to find
-                        the hotel in the data.
-  -o OUTPUT, --output OUTPUT
-                        If provided, all data used to generate the final graph is saved to a csv file with this name.
 ```
