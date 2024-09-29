@@ -37,3 +37,83 @@ Options:
   --help                          Show this message and exit.
 
 ```
+
+# Roadmap
+- Integrate a flight info web scraper
+  - then correlate flight info to hotel deals to find economic trips
+- switch from using (uninteractive) click library to prompt_toolkit. This will:
+  - let the app be used in sessions, which will decrease time spent during initialization and shut down processes
+  - allow for auto completion, making it simpler to input queries
+
+
+```mermaid
+---
+title: Class Diagrams
+---
+
+classDiagram
+    UI --> FlightInterface
+    UI --> HotelInterface
+    UI ..> Flight
+    UI ..> Hotel
+    FlightInterface <|.. Proxy
+    HotelInterface <|.. Proxy
+    Proxy o-- WebService
+    Proxy --> FlightData
+    Proxy --> HotelData
+
+
+    class UI{
+        +help()
+        +void get_flight(dest, start, end)
+        +void get_hotel(dest, start, end)
+        +void graph_hotel_dates()
+    }
+    class FlightInterface {
+        <<interface>>
+        +Flight get_flight(dest, start, end)
+    }
+    class HotelInterface {
+        <<interface>>
+        +Hotel get_hotel(dest, start, end)
+    }
+    class Proxy{
+        -real_service: WebService
+        +Proxy(s: WebService)
+        +Flight get_flight(dest, start, end)
+        +Hotel get_hotel(dest, start, end)
+        +bool already_requested(h: Hotel)
+        +bool already_requested(f: Flight)
+    }
+    
+    class WebService{
+        +Flight get_flight(dest, start, end)
+        +Hotel get_hotel(dest, start, end)
+    }
+
+    class Flight{
+        +str Airline
+        +int price
+        +datetime departure
+        +datetime arrival
+    }
+
+    class FlightData{
+        +List[Flight] flights
+        +add(flight: Flight)
+    }
+    class HotelData{
+        +List[Hotel] hotels
+        +add(hotel: Hotel)
+    }
+
+    class Hotel{
+        +Dict[str, int] nightly_rates
+        +str city
+        +str url
+    }
+
+
+```
+
+
