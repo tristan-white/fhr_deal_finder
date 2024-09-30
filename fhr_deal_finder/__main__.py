@@ -2,8 +2,7 @@
 
 import datetime
 import click
-
-import fhrlib as fhr
+from . import fhrlib as fhr
 
 class BeginDate(click.ParamType):
     name = "BeginDate"
