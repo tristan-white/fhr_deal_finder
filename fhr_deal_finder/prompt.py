@@ -16,20 +16,23 @@ def help():
             f"\t<b>{cmd}</b>"
         ))
 
-async def cli():
+async def main():
     session = PromptSession()
+
+    text = "<mytag fg='skyblue' bg='green'>FHR Deal Finder 0.1.0</mytag>"
+    print_formatted_text(HTML(text))
 
     while True:
         try:
             with patch_stdout():
-                result = await session.prompt_async("[ None ]> ", )
+                result = await session.prompt_async("$ ", )
         except KeyboardInterrupt:
             print_formatted_text(HTML(
                 "Press <yellow><b>Ctrl-D</b></yellow> to exit."
             ))
             continue
         except EOFError:
-            print("eof error")
+            print("Exiting...")
             break
         else:
             if result not in cmds:
@@ -38,4 +41,4 @@ async def cli():
                 print("not implemented yet")
 
 if __name__ == "__main__":
-    asyncio.run(cli())
+    asyncio.run(main())

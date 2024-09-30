@@ -58,6 +58,8 @@ classDiagram
     UI ..> Hotel
     FlightInterface <|.. Proxy
     HotelInterface <|.. Proxy
+    FlightInterface <|.. WebService
+    HotelInterface <|.. WebService
     Proxy o-- WebService
     Proxy --> FlightData
     Proxy --> HotelData
