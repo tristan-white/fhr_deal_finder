@@ -1,3 +1,5 @@
+> Check out my new site [higheraspire.com](https://higheraspire.com) to find the cheapest hotels eligible for the Amex Hilton Aspire Card resort credit.
+
 # Fine Hotels + Resorts Deal Finder
 
 This project enables you to find the best (priced) place to spend the Amex Platinum Card $200 hotel credit by querying real-time data to create an interactive graph of prices and dates.
